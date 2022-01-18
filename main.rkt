@@ -41,10 +41,10 @@
   ;; http://docs.racket-lang.org/guide/Module_Syntax.html#%28part._main-and-test%29
 
   (require racket/cmdline)
-  (define who (box "world"))
+  (require racket/file)
+  (require "ui/cli.rkt")
+
   (command-line
-    #:program "my-program"
-    #:once-each
-    [("-n" "--name") name "Who to say hello to" (set-box! who name)]
-    #:args ()
-    (printf "hello ~a~n" (unbox who))))
+    #:program "ivy"
+    #:args (filename)
+    (ivy-cli (file->lines filename))))
