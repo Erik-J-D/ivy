@@ -1,4 +1,4 @@
-#lang racket/base
+#lang racket
 (require racket/match
          racket/format
          lux
@@ -13,39 +13,33 @@
   (match c
     [(cursor row col) (cursor (max 0 (+ dr row)) (max 0 (+ dc col)))]))
 
-(define (render-line cursor row line)
-  (define line-len (min width (string-length line)))
+(define (render-line-with-cursor cursor-pos line)
+  (let* ([line-len (min width (string-length line))]
+         [capped-cursor-pos (min cursor-pos line-len)]
+         [char-at-cursor (cond
+                           [(= capped-cursor-pos line-len) #\space]
+                           [else (string-ref line capped-cursor-pos)])])
+    (let ([rendered
+           (happend
+            (text (substring line 0 capped-cursor-pos))
+            (bg 'white (fg 'black (char char-at-cursor)))
+            (text (substring line (min line-len (+ capped-cursor-pos 1)))))])
 
-  (define (render-line-with-cursor)
-    (let* ([real-cur-pos (cursor-col cursor)]
-           [cur-pos (min real-cur-pos line-len)]
-           [char-at-cursor (cond
-                             [(= cur-pos line-len) #\space]
-                             [else (string-ref line cur-pos)])])
-      (let ([rendered
-             (happend
-              (text (substring line 0 cur-pos))
-              (bg 'white (fg 'black (char char-at-cursor)))
-              (text (substring line (min line-len (+ cur-pos 1)))))])
-
-        (cond
-          [(not (= cur-pos real-cur-pos))
-           ;; If our cursor is beyond the end-of-line, render a cursor shadow
-           ;; where our pointer actually is.
-           (place-at rendered 0 real-cur-pos (bg 'brblack (char #\space)))]
-          [else rendered]))))
-
-  (cond
-    [(= row (cursor-row cursor)) (render-line-with-cursor)]
-    [else (text (substring line 0 line-len))]))
+      (cond
+        ;; If our cursor is beyond the end-of-line, render a shadow cursor
+        ;; where our pointer actually is.
+        [(not (= capped-cursor-pos cursor-pos))
+         (place-at rendered 0 cursor-pos (bg 'brblack (char #\space)))]
+        [else rendered]))))
 
 (define (render-buffer w initial-r)
   (match w
-    [(ivy buf cursor)
-     (let-values ([(r i)
-                   (for/fold ([r initial-r] [row 0]) ([line (in-list buf)])
-                     (values (place-at r row 0 (render-line cursor row line)) (+ row 1)))])
-       r)]))
+    [(ivy buf (cursor cur-row cur-col))
+     (vappend*
+      (append (map text (take buf cur-row))
+              (list (render-line-with-cursor cur-col (list-ref buf cur-row)))
+              (map text (drop buf (+ 1 cur-row))))
+      #:halign 'left)]))
 
 (struct ivy (buffer cursor)
   #:methods gen:word
