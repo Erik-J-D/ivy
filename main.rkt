@@ -42,4 +42,6 @@
   (require racket/file)
   (require "ui/cli.rkt")
 
-  (command-line #:program "ivy" #:args (filename) (ivy-cli (file->lines filename))))
+  (command-line #:program "ivy"
+                #:args (filename)
+                (ivy-cli (file->lines filename))))

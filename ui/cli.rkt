@@ -4,31 +4,40 @@
          lux
          raart)
 
-(define row 80)
-(define col 80)
+(define height 80)
+(define width 80)
 
-(struct cursor (row col))
+(struct cursor (row col) #:transparent)
 
-(define (move-cursor w dr dc)
-  (match w
-    [(ivy buf (cursor row col)) (ivy buf (cursor (+ dr row) (+ dc col)))]))
+(define (move-cursor c dr dc)
+  (match c
+    [(cursor row col) (cursor (max 0 (+ dr row)) (max 0 (+ dc col)))]))
 
-(define (render-line initial-r i-row line cursor-row cursor-col)
-  (let-values ([(r i) (for/fold ([r initial-r] [i-col 0]) ([c (in-string line)])
-                        (values (place-at r
-                                          i-row
-                                          i-col
-                                          (if (and (= i-col cursor-col) (= i-row cursor-row))
-                                              (bg 'red (char c))
-                                              (char c)))
-                                (+ 1 i-col)))])
-    r))
+(define (render-line r row line c)
+  (define line-len (min width (string-length line)))
+
+  (define (render-line-with-cursor)
+    (let* ([cur-pos (min (cursor-col c) line-len)]
+           [line-before-cursor (substring line 0 cur-pos)]
+           [char-at-cursor (cond
+                             [(= cur-pos line-len) #\space]
+                             [else (string-ref line cur-pos)])]
+           [line-after-cursor (substring line (min line-len (+ cur-pos 1)))])
+      (place-at* r
+                 [row 0 (text line-before-cursor)]
+                 [row cur-pos (bg 'red (char char-at-cursor))]
+                 [row (+ 1 cur-pos) (text line-after-cursor)])))
+
+  (cond
+    [(= row (cursor-row c)) (render-line-with-cursor)]
+    [else (place-at r row 0 (text (substring line 0 line-len)))]))
 
 (define (render-buffer w initial-r)
   (match w
-    [(ivy buf (cursor row col))
-     (let-values ([(r i) (for/fold ([r initial-r] [i-row 0]) ([line (in-list buf)])
-                           (values (render-line r i-row line row col) (+ 1 i-row)))])
+    [(ivy buf cursor)
+     (let-values ([(r i)
+                   (for/fold ([r initial-r] [i-row 0]) ([line (in-list buf)])
+                     (values (render-line r i-row line cursor) (+ 1 i-row)))])
        r)]))
 
 (struct ivy (buffer cursor)
@@ -38,15 +47,17 @@
    (define (word-label w ft)
      "Ivy")
    (define (word-event w e)
-     (match e
-       [(screen-size-report _ _) w]
-       ["<left>" (move-cursor w 0 -1)]
-       ["<right>" (move-cursor w 0 1)]
-       ["<up>" (move-cursor w -1 0)]
-       ["<down>" (move-cursor w 1 0)]
-       ["q" #f]))
+     (match w
+       [(ivy buf cur) (match e
+                        [(screen-size-report _ _) w]
+                        ["<left>" (ivy buf (move-cursor cur 0 -1))]
+                        ["<right>" (ivy buf (move-cursor cur 0 1))]
+                        ["<up>" (ivy buf (move-cursor cur -1 0))]
+                        ["<down>" (ivy buf (move-cursor cur 1 0))]
+                        ["q" #f])]))
    (define (word-output w)
-     (without-cursor (crop 0 row 0 col (render-buffer w (blank row col)))))
+     (without-cursor
+      (crop 0 width 0 height (render-buffer w (blank width height)))))
    (define (word-return w)
      (~a "See-ya!"))])
 
