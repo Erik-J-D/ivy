@@ -55,4 +55,5 @@
 
 (provide str->rope
          rope->str
-         insert-str-into-rope)
+         insert-str-into-rope
+         rope-length)
