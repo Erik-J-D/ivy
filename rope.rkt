@@ -19,33 +19,39 @@
                (str->rope (substring str halfway-point))))])))
 
 (define rope->str
-  (lambda (tree)
+  (lambda (rope)
     (cond
-      [(null? tree) ""]
-      [(leaf-node? tree) (node-value tree)]
+      [(null? rope) ""]
+      [(leaf-node? rope) (node-value rope)]
       [else
-       (string-append (rope->str (node-left tree))
-                      (rope->str (node-right tree)))])))
+       (string-append (rope->str (node-left rope))
+                      (rope->str (node-right rope)))])))
+
+(define rope-length
+  (lambda (rope)
+    (if (leaf-node? rope)
+        (string-length (node-value rope))
+        (+ (node-value rope) (rope-length (node-right rope))))))
 
 (define insert-str-into-rope
-  (lambda (tree str pos)
+  (lambda (rope str pos)
     (cond
-      [(leaf-node? tree)
-       (node (string-append (substring (node-value tree) 0 pos)
+      [(leaf-node? rope)
+       (node (string-append (substring (node-value rope) 0 pos)
                             str
-                            (substring (node-value tree) pos))
+                            (substring (node-value rope) pos))
              empty
              empty)]
-      [(> (node-value tree) pos)
-       (node (+ (node-value tree) (string-length str))
-             (insert-str-into-rope (node-left tree) str pos)
-             (node-right tree))]
+      [(> (node-value rope) pos)
+       (node (+ (node-value rope) (string-length str))
+             (insert-str-into-rope (node-left rope) str pos)
+             (node-right rope))]
       [else
-       (node (node-value tree)
-             (node-left tree)
-             (insert-str-into-rope (node-right tree)
+       (node (node-value rope)
+             (node-left rope)
+             (insert-str-into-rope (node-right rope)
                                    str
-                                   (- pos (node-value tree))))])))
+                                   (- pos (node-value rope))))])))
 
 (provide str->rope
          rope->str

@@ -5,7 +5,7 @@
 
 (define str "hello I am a small rope test")
 
-; Basic Conversion Tests
+; Basic Conversion Test
 (check-equal? (rope->str (str->rope str)) str)
 
 ; Insertion Tests
