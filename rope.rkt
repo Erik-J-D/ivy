@@ -5,6 +5,12 @@
 (define leaf-node-min-len (quotient leaf-node-max-len 2))
 
 
+; TODO adjust
+; TODO rebalance
+; TODO rebuild (using get-substring-from-rope to save space)
+; TODO rewrite str->rope using substrings instead of splitting?
+
+
 ; NODE
 ; a node value is either a string if it's a leaf node, or an integer
 ; representing the length of the left branch if it's not. Leaf nodes have empty
@@ -28,12 +34,28 @@
 
 (define rope->str
   (lambda (rope)
+    (get-substring-from-rope rope 0 (rope-length rope))))
+
+(define get-substring-from-rope
+  (lambda (rope start end)
     (cond
-      [(null? rope) ""]
-      [(leaf-node? rope) (node-value rope)]
-      [else
-       (string-append (rope->str (node-left rope))
-                      (rope->str (node-right rope)))])))
+      [(>= start end) (error "end must be greater than start")]
+      [(or (< start 0) (> end (rope-length rope)))
+       (error "start and end must be within bounds")]
+
+      [(leaf-node? rope) (substring (node-value rope) start end)]
+      [(<= end (node-value rope))
+       (get-substring-from-rope (node-left rope) start end)]
+      [(and (< start (node-value rope)) (> end (node-value rope)))
+       (string-append
+        (get-substring-from-rope (node-left rope) start (node-value rope))
+        (get-substring-from-rope (node-right rope)
+                                 0
+                                 (- end (node-value rope))))]
+      [(>= start (node-value rope))
+       (get-substring-from-rope (node-right rope)
+                                (- start (node-value rope))
+                                (- end (node-value rope)))])))
 
 (define rope-length
   (lambda (rope)
@@ -77,7 +99,7 @@
              (delete-from-rope (node-left rope) start end)
              (node-right rope))]
       [(and (< start (node-value rope)) (> end (node-value rope)))
-       (node (- (node-value rope) (- end start))
+       (node start
              (delete-from-rope (node-left rope) start (node-value rope))
              (delete-from-rope (node-right rope) 0 (- end (node-value rope))))]
       [(>= start (node-value rope))
@@ -91,4 +113,5 @@
          rope->str
          insert-str-into-rope
          delete-from-rope
+         get-substring-from-rope
          rope-length)
