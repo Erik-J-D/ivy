@@ -17,7 +17,8 @@
 ; left and right braches and we only care about the string they contain
 (struct node (value left right))
 
-(define leaf-node (lambda (str) (node str empty empty)))
+(define leaf-node
+  (lambda (str) (node (string->immutable-string str) empty empty)))
 (define leaf-node? (lambda (node) (string? (node-value node))))
 
 
@@ -72,7 +73,7 @@
        (leaf-node (string-append (substring (node-value rope) 0 pos)
                                  str
                                  (substring (node-value rope) pos)))]
-      [(> (node-value rope) pos)
+      [(< pos (node-value rope))
        (node (+ (node-value rope) (string-length str))
              (insert-str-into-rope (node-left rope) str pos)
              (node-right rope))]
