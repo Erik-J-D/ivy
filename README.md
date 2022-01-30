@@ -18,8 +18,8 @@ Currently using raco fmt:
 $ raco pkg install fmt
 ```
 
-A file can be formatted in place with:
+All racket files in the repo can be formatted in place with:
 
 ```
-$ raco fmt -i --width 80 --max-blank-lines 2 <file.rkt>
+$ find . -type f -name "*.rkt" | xargs raco fmt -i --width 80 --max-blank-lines 2
 ```

@@ -11,7 +11,7 @@
 ; Insertion Tests
 ; these make sense when we're breaking strings into chunks of max length 10
 ; but will need to be replaced with longer ones probably
-(for ([r (+ 1 ( string-length test-str))])
+(for ([r (+ 1 (string-length test-str))])
   (check-equal?
    (rope->str (insert-str-into-rope (str->rope test-str) "¯\\_(ツ)_/¯" r))
    (string-append-immutable (substring test-str 0 r)

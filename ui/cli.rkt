@@ -49,13 +49,14 @@
      "Ivy")
    (define (word-event w e)
      (match w
-       [(ivy buf cur) (match e
-                        [(screen-size-report _ _) w]
-                        ["<left>" (ivy buf (move-cursor cur 0 -1))]
-                        ["<right>" (ivy buf (move-cursor cur 0 1))]
-                        ["<up>" (ivy buf (move-cursor cur -1 0))]
-                        ["<down>" (ivy buf (move-cursor cur 1 0))]
-                        ["q" #f])]))
+       [(ivy buf cur)
+        (match e
+          [(screen-size-report _ _) w]
+          ["<left>" (ivy buf (move-cursor cur 0 -1))]
+          ["<right>" (ivy buf (move-cursor cur 0 1))]
+          ["<up>" (ivy buf (move-cursor cur -1 0))]
+          ["<down>" (ivy buf (move-cursor cur 1 0))]
+          ["q" #f])]))
    (define (word-output w)
      (without-cursor
       (crop 0 width 0 height (render-buffer w (blank width height)))))
