@@ -33,8 +33,7 @@
                (str->rope (substring str halfway-point))))])))
 
 (define rope->str
-  (lambda (rope)
-    (get-substring-from-rope rope 0 (rope-length rope))))
+  (lambda (rope) (get-substring-from-rope rope 0 (rope-length rope))))
 
 (define get-substring-from-rope
   (lambda (rope start end)
