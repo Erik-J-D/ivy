@@ -21,3 +21,10 @@
               "hello I am a _small rope test")
 (check-equal? (rope->str (insert-str-into-rope (str->rope str) "_" 20))
               "hello I am a small r_ope test")
+
+; Deletion Tests
+; Again, need long tests for bigger chunks
+(check-equal? (rope->str (delete-from-rope (str->rope "hello") 2 4)) "heo")
+(check-equal? (rope->str (delete-from-rope (str->rope str) 2 13))
+              "hesmall rope test")
+(check-equal? (rope->str (delete-from-rope (str->rope str) 2 20)) "heope test")
