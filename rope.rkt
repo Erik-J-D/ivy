@@ -1,5 +1,7 @@
 #lang racket
 
+(require racket/struct)
+
 ; TODO figure out a good value for max-len, currently 10 for easy testing
 (define leaf-node-max-len 10)
 (define leaf-node-min-len (quotient leaf-node-max-len 2))
@@ -15,7 +17,16 @@
 ; a node value is either a string if it's a leaf node, or an integer
 ; representing the length of the left branch if it's not. Leaf nodes have empty
 ; left and right braches and we only care about the string they contain
-(struct node (value left right))
+(struct node (value left right)
+  #:transparent
+  #:methods gen:custom-write
+  [(define write-proc
+     (make-constructor-style-printer
+      (lambda (node) (if (leaf-node? node) 'leaf-node 'node))
+      (lambda (node)
+        (if (leaf-node? node)
+            (list (node-value node))
+            (list (node-value node) (node-left node) (node-right node))))))])
 
 (define leaf-node
   (lambda (str) (node (string->immutable-string str) empty empty)))
