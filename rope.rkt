@@ -47,7 +47,7 @@
       [(<= end (node-value rope))
        (get-substring-from-rope (node-left rope) start end)]
       [(and (< start (node-value rope)) (> end (node-value rope)))
-       (string-append
+       (string-append-immutable
         (get-substring-from-rope (node-left rope) start (node-value rope))
         (get-substring-from-rope (node-right rope)
                                  0
@@ -70,9 +70,9 @@
        (error "pos must be within bounds")]
 
       [(leaf-node? rope)
-       (leaf-node (string-append (substring (node-value rope) 0 pos)
-                                 str
-                                 (substring (node-value rope) pos)))]
+       (leaf-node (string-append-immutable (substring (node-value rope) 0 pos)
+                                           str
+                                           (substring (node-value rope) pos)))]
       [(< pos (node-value rope))
        (node (+ (node-value rope) (string-length str))
              (insert-str-into-rope (node-left rope) str pos)
@@ -92,8 +92,8 @@
        (error "start and end must be within bounds")]
 
       [(leaf-node? rope)
-       (leaf-node (string-append (substring (node-value rope) 0 start)
-                                 (substring (node-value rope) end)))]
+       (leaf-node (string-append-immutable (substring (node-value rope) 0 start)
+                                           (substring (node-value rope) end)))]
       [(<= end (node-value rope))
        (node (- (node-value rope) (- end start))
              (delete-from-rope (node-left rope) start end)
