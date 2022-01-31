@@ -3,11 +3,10 @@
 (require racket/struct)
 
 ; TODO figure out a good value for max-len, currently 10 for easy testing
-(define leaf-node-max-len 10)
-(define leaf-node-min-len (quotient leaf-node-max-len 2))
+(define leaf-node-split-len 10)
+(define leaf-node-join-len (quotient leaf-node-split-len 2))
 
 
-; TODO adjust
 ; TODO rebalance
 ; TODO rebuild (using get-substring-from-rope to save space)
 ; TODO rewrite str->rope using substrings instead of splitting?
@@ -37,7 +36,7 @@
   (lambda (str)
     (cond
       [(null? str) (leaf-node "")]
-      [(< (string-length str) leaf-node-max-len) (leaf-node str)]
+      [(< (string-length str) leaf-node-split-len) (leaf-node str)]
       [else
        (let ([halfway-point (quotient (string-length str) 2)])
          (node halfway-point
@@ -50,10 +49,11 @@
 (define get-substring-from-rope
   (lambda (rope start end)
     (cond
-      [(>= start end) (error "end must be greater than start")]
       [(or (< start 0) (> end (rope-length rope)))
        (error "start and end must be within bounds")]
+      [(> start end) (error "end must be greater than or equal to start")]
 
+      [(= start end) ""]
       [(leaf-node? rope) (substring (node-value rope) start end)]
       [(<= end (node-value rope))
        (get-substring-from-rope (node-left rope) start end)]
@@ -76,49 +76,60 @@
 
 (define insert-str-into-rope
   (lambda (rope str pos)
-    (cond
-      [(or (negative? pos) (> pos (rope-length rope)))
-       (error "pos must be within bounds")]
+    (adjust (cond
+              [(or (negative? pos) (> pos (rope-length rope)))
+               (error "pos must be within bounds")]
 
-      [(leaf-node? rope)
-       (leaf-node (string-append-immutable (substring (node-value rope) 0 pos)
+              [(leaf-node? rope)
+               (leaf-node (string-append-immutable
+                           (substring (node-value rope) 0 pos)
+                           str
+                           (substring (node-value rope) pos)))]
+              [(< pos (node-value rope))
+               (node (+ (node-value rope) (string-length str))
+                     (insert-str-into-rope (node-left rope) str pos)
+                     (node-right rope))]
+              [else
+               (node (node-value rope)
+                     (node-left rope)
+                     (insert-str-into-rope (node-right rope)
                                            str
-                                           (substring (node-value rope) pos)))]
-      [(< pos (node-value rope))
-       (node (+ (node-value rope) (string-length str))
-             (insert-str-into-rope (node-left rope) str pos)
-             (node-right rope))]
-      [else
-       (node (node-value rope)
-             (node-left rope)
-             (insert-str-into-rope (node-right rope)
-                                   str
-                                   (- pos (node-value rope))))])))
+                                           (- pos (node-value rope))))]))))
 
 (define delete-from-rope
   (lambda (rope start end)
-    (cond
-      [(>= start end) (error "end must be greater than start")]
-      [(or (< start 0) (> end (rope-length rope)))
-       (error "start and end must be within bounds")]
+    (adjust
+     (cond
+       [(>= start end) (error "end must be greater than start")]
+       [(or (< start 0) (> end (rope-length rope)))
+        (error "start and end must be within bounds")]
 
-      [(leaf-node? rope)
-       (leaf-node (string-append-immutable (substring (node-value rope) 0 start)
-                                           (substring (node-value rope) end)))]
-      [(<= end (node-value rope))
-       (node (- (node-value rope) (- end start))
-             (delete-from-rope (node-left rope) start end)
-             (node-right rope))]
-      [(and (< start (node-value rope)) (> end (node-value rope)))
-       (node start
-             (delete-from-rope (node-left rope) start (node-value rope))
-             (delete-from-rope (node-right rope) 0 (- end (node-value rope))))]
-      [(>= start (node-value rope))
-       (node (node-value rope)
-             (node-left rope)
-             (delete-from-rope (node-right rope)
-                               (- start (node-value rope))
-                               (- end (node-value rope))))])))
+       [(leaf-node? rope)
+        (leaf-node (string-append-immutable
+                    (substring (node-value rope) 0 start)
+                    (substring (node-value rope) end)))]
+       [(<= end (node-value rope))
+        (node (- (node-value rope) (- end start))
+              (delete-from-rope (node-left rope) start end)
+              (node-right rope))]
+       [(and (< start (node-value rope)) (> end (node-value rope)))
+        (node start
+              (delete-from-rope (node-left rope) start (node-value rope))
+              (delete-from-rope (node-right rope) 0 (- end (node-value rope))))]
+       [(>= start (node-value rope))
+        (node (node-value rope)
+              (node-left rope)
+              (delete-from-rope (node-right rope)
+                                (- start (node-value rope))
+                                (- end (node-value rope))))]))))
+
+(define adjust
+  (lambda (rope)
+    (cond
+      [(and (leaf-node? rope) (> (rope-length rope) leaf-node-split-len))
+       (str->rope (node-value rope))]
+      [(< (rope-length rope) leaf-node-join-len) (leaf-node (rope->str rope))]
+      [else rope])))
 
 (provide str->rope
          rope->str
