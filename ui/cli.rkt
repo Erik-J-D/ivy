@@ -15,10 +15,11 @@
 
 (define (snap-cursor c buf)
   (match c
-    [(cursor row col) (let* ([capped-row (min row (- (length buf) 1))]
-                             [cursor-line (list-ref buf capped-row)]
-                             [capped-col (min col (string-length cursor-line))])
-                        (cursor capped-row capped-col))]))
+    [(cursor row col)
+     (let* ([capped-row (min row (- (length buf) 1))]
+            [cursor-line (list-ref buf capped-row)]
+            [capped-col (min col (string-length cursor-line))])
+       (cursor capped-row capped-col))]))
 
 (define (render-line-with-cursor cursor line)
   (let* ([line-len (min width (string-length line))]
@@ -79,17 +80,18 @@
      "Ivy")
    (define (word-event w e)
      (match w
-       [(ivy buf cur) (match e
-                        [(screen-size-report _ _) w]
-                        ["<left>" (ivy buf (move-cursor cur 0 -1))]
-                        ["<right>" (ivy buf (move-cursor cur 0 1))]
-                        ["<up>" (ivy buf (move-cursor cur -1 0))]
-                        ["<down>" (ivy buf (move-cursor cur 1 0))]
-                        ["<backspace>" (ivy (delete-buf buf cur 1)
-                                            (move-cursor cur 0 -1))]
-                        ["q" #f] ;; quit
-                        [c (ivy (insert-buf buf cur c)
-                                (move-cursor cur 0 (string-length c)))])]))
+       [(ivy buf cur)
+        (match e
+          [(screen-size-report _ _) w]
+          ["<left>" (ivy buf (move-cursor cur 0 -1))]
+          ["<right>" (ivy buf (move-cursor cur 0 1))]
+          ["<up>" (ivy buf (move-cursor cur -1 0))]
+          ["<down>" (ivy buf (move-cursor cur 1 0))]
+          ["<backspace>" (ivy (delete-buf buf cur 1) (move-cursor cur 0 -1))]
+          ["q" #f] ;; quit
+          [c
+           (ivy (insert-buf buf cur c)
+                (move-cursor cur 0 (string-length c)))])]))
    (define (word-output w)
      (without-cursor
       (crop 0 width 0 height (render-buffer w (blank width height)))))
