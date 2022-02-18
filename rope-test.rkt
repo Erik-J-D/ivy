@@ -32,3 +32,15 @@
   (check-equal?
    (get-substring-from-rope (str->rope test-str) (first r) (second r))
    (substring test-str (first r) (second r))))
+
+; rebalance
+(check-equal?
+ (rope->str (rebalance-rope
+             (insert-str-into-rope
+              (str->rope "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16")
+              "asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadfasdfasdf"
+              10)))
+ (rope->str (insert-str-into-rope
+             (str->rope "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16")
+             "asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfadfasdfasdf"
+             10)))
