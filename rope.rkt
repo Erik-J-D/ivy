@@ -7,7 +7,6 @@
 (define leaf-node-join-len (quotient leaf-node-split-len 2))
 
 
-; TODO rebalance
 ; TODO rebuild (using get-substring-from-rope to save space)
 ; TODO rewrite str->rope using substrings instead of splitting?
 
@@ -29,6 +28,7 @@
 
 (define leaf-node
   (lambda (str) (node (string->immutable-string str) empty empty)))
+
 (define leaf-node? (lambda (node) (string? (node-value node))))
 
 
@@ -43,8 +43,10 @@
                (str->rope (substring str 0 halfway-point))
                (str->rope (substring str halfway-point))))])))
 
+
 (define rope->str
   (lambda (rope) (get-substring-from-rope rope 0 (rope-length rope))))
+
 
 (define get-substring-from-rope
   (lambda (rope start end)
@@ -131,9 +133,33 @@
       [(< (rope-length rope) leaf-node-join-len) (leaf-node (rope->str rope))]
       [else rope])))
 
+
+(define rebalance-rope (lambda (rope) (lleaves->rope (rope->lleaves rope))))
+
+(define rope->lleaves
+  (lambda (rope)
+    (cond
+      [(leaf-node? rope) (list rope)]
+      [else
+       (append (rope->lleaves (node-left rope))
+               (rope->lleaves (node-right rope)))])))
+
+(define lleaves->rope
+  (lambda (lleaves)
+    (cond
+      [(= 1 (length lleaves)) (first lleaves)]
+      [else
+       (let ([halfway-point (quotient (length lleaves) 2)])
+         (node (apply +
+                      (map (lambda (leaf) (string-length (node-value leaf)))
+                           (take lleaves halfway-point)))
+               (lleaves->rope (take lleaves halfway-point))
+               (lleaves->rope (drop lleaves halfway-point))))])))
+
 (provide str->rope
          rope->str
          insert-str-into-rope
          delete-from-rope
+         rebalance-rope
          get-substring-from-rope
          rope-length)
