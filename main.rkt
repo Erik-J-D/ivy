@@ -1,4 +1,4 @@
-#lang racket/base
+#lang racket
 
 (module+ test
   (require rackunit))
@@ -41,7 +41,8 @@
   (require racket/cmdline)
   (require racket/file)
   (require "ui/cli.rkt")
+  (require "rope.rkt")
 
   (command-line #:program "ivy"
                 #:args (filename)
-                (ivy-cli (file->lines filename))))
+                (ivy-cli (str->rope (file->string filename)))))
