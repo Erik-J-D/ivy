@@ -8,7 +8,7 @@ Ivy aims to be a text editor (very) loosely inspired by vim and emacs, for the 2
 - Written in Racket. This was chosen because Racket is:
     - reasonably performant
     - well supported across OSes
-    - interpreted, this makes it easier to write plugins (this is step Rust failed)
+    - interpreted, this makes it easier to write plugins (this is the step Rust failed)
 - Backed by a rope
 - Offload *all* language processing onto LSP servers and treesitter.
 - Write a backend and frontend independently so you can swap out frontends
