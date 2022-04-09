@@ -2,8 +2,8 @@
 
 (require racket/struct)
 
-; TODO figure out a good value for max-len, currently 10 for easy testing
-(define leaf-node-split-len 10)
+; TODO figure out a performance test to optimize leaf-node-split-len
+(define leaf-node-split-len 256)
 (define leaf-node-join-len (quotient leaf-node-split-len 2))
 
 ; NODE
@@ -39,6 +39,16 @@
                (str->rope (substring str 0 halfway-point))
                (str->rope (substring str halfway-point))))])))
 
+(define max-min-height
+  (lambda (rope)
+    (if (leaf-node? rope)
+        '(0 0)
+        (let ([left-max-min (max-min-height (node-left rope))]
+              [right-max-min (max-min-height (node-right rope))])
+          (list (add1 (max (first left-max-min) (first right-max-min)))
+                (add1 (min (last left-max-min) (last right-max-min))))))))
+
+(define balanced? (lambda (rope) (< (apply - (max-min-height rope)) 2)))
 
 (define rope->str
   (lambda (rope) (get-substring-from-rope rope 0 (rope-length rope))))
@@ -155,11 +165,14 @@
                (lleaves->rope (take lleaves halfway-point))
                (lleaves->rope (drop lleaves halfway-point))))])))
 
-(provide str->rope
-         rope->str
-         insert-str-into-rope
+(provide balanced?
          delete-from-rope
-         rebalance-rope
          get-substring-from-rope
+         insert-str-into-rope
+         leaf-node
+         node
+         rebalance-rope
+         rope->str
          rope-length
-         rope?)
+         rope?
+         str->rope)
