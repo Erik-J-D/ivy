@@ -6,11 +6,6 @@
 (define leaf-node-split-len 10)
 (define leaf-node-join-len (quotient leaf-node-split-len 2))
 
-
-; TODO rebuild (using get-substring-from-rope to save space)
-; TODO rewrite str->rope using substrings instead of splitting?
-
-
 ; NODE
 ; a node value is either a string if it's a leaf node, or an integer
 ; representing the length of the left branch if it's not. Leaf nodes have empty
@@ -31,6 +26,7 @@
 
 (define leaf-node? (lambda (node) (string? (node-value node))))
 
+(define rope? node?)
 
 (define str->rope
   (lambda (str)
@@ -130,7 +126,10 @@
     (cond
       [(and (leaf-node? rope) (> (rope-length rope) leaf-node-split-len))
        (str->rope (node-value rope))]
+      [(leaf-node? rope) rope]
       [(< (rope-length rope) leaf-node-join-len) (leaf-node (rope->str rope))]
+      [(eq? 0 (rope-length (node-left rope))) (node-right rope)]
+      [(eq? 0 (rope-length (node-right rope))) (node-left rope)]
       [else rope])))
 
 
@@ -162,4 +161,5 @@
          delete-from-rope
          rebalance-rope
          get-substring-from-rope
-         rope-length)
+         rope-length
+         rope?)
